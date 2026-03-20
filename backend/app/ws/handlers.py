@@ -69,9 +69,13 @@ class SessionHandler:
             self._speech_service = None
 
     def _handle_toggle(self, msg: dict) -> None:
-        speaker = msg["speaker"]
-        enabled = msg["enabled"]
-        target_lang = msg["targetLang"]
+        try:
+            speaker = msg["speaker"]
+            enabled = msg["enabled"]
+            target_lang = msg["targetLang"]
+        except KeyError:
+            logger.warning("Malformed toggle_translation message: %s", msg)
+            return
         if enabled:
             self._translation_enabled[speaker] = target_lang
         else:
