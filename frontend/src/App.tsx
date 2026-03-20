@@ -1,121 +1,76 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useTranscription } from "./hooks/useTranscription";
+import { TranscriptionView } from "./components/TranscriptionView";
+import { SessionControls } from "./components/SessionControls";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const {
+    entries,
+    status: _status,
+    isSessionActive,
+    error,
+    elapsed,
+    startSession,
+    stopSession,
+    toggleTranslation,
+  } = useTranscription();
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app">
+      {/* Top bar */}
+      <header className="top-bar">
+        <div className="brand">
+          <div className="logo">I</div>
+          <span className="app-name">IncluSpeech</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
+        <div className="status-area">
+          {isSessionActive && (
+            <div className="status-badge">
+              <div className="status-dot" />
+              <span>Listening</span>
+            </div>
+          )}
+          <div className="lang-badge">ES / EN</div>
         </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      {/* Error banner */}
+      {error && (
+        <div className="error-banner">
+          <span>{error}</span>
+          <button onClick={() => window.location.reload()}>Retry</button>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* Main content */}
+      <main className="main-content">
+        {isSessionActive ? (
+          <TranscriptionView
+            entries={entries}
+            onToggleTranslation={toggleTranslation}
+          />
+        ) : (
+          <div className="welcome">
+            <h1>IncluSpeech</h1>
+            <p>Real-time transcription for inclusive conversations</p>
+            <p className="hint">
+              Place the device between both speakers and press Start.
+            </p>
+          </div>
+        )}
+      </main>
+
+      {/* Bottom bar */}
+      <footer className="bottom-bar">
+        <SessionControls
+          isSessionActive={isSessionActive}
+          elapsed={elapsed}
+          onStart={startSession}
+          onStop={stopSession}
+        />
+      </footer>
+    </div>
+  );
 }
 
-export default App
+export default App;
