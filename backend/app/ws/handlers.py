@@ -66,6 +66,7 @@ class SessionHandler:
     def _stop_speech_service(self) -> None:
         if self._speech_service:
             self._speech_service.stop()
+            self._speech_service = None
 
     def _handle_toggle(self, msg: dict) -> None:
         speaker = msg["speaker"]

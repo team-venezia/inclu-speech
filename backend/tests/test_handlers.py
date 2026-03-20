@@ -23,12 +23,13 @@ async def test_handle_start_session():
 async def test_handle_stop_session():
     send = AsyncMock()
     handler = SessionHandler(send_json=send)
-    handler._speech_service = MagicMock()
-    handler._speech_service.stop = MagicMock()
+    mock_service = MagicMock()
+    mock_service.stop = MagicMock()
+    handler._speech_service = mock_service
 
     await handler.handle_text('{"type": "stop_session"}')
 
-    handler._speech_service.stop.assert_called_once()
+    mock_service.stop.assert_called_once()
     calls = [c[0][0] for c in send.call_args_list]
     assert any(m["type"] == "session_stopped" for m in calls)
 
