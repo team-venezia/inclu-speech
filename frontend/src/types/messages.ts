@@ -1,0 +1,79 @@
+// --- Client to Server (text frames) ---
+
+export interface StartSessionMessage {
+  type: "start_session";
+  config: { sampleRate: number };
+}
+
+export interface StopSessionMessage {
+  type: "stop_session";
+}
+
+export interface ToggleTranslationMessage {
+  type: "toggle_translation";
+  speaker: number;
+  targetLang: string;
+  enabled: boolean;
+}
+
+export type ClientMessage =
+  | StartSessionMessage
+  | StopSessionMessage
+  | ToggleTranslationMessage;
+
+// Audio is sent as binary frames (not JSON), so no type here.
+
+// --- Server to Client ---
+
+export interface SessionStartedMessage {
+  type: "session_started";
+}
+
+export interface SessionStoppedMessage {
+  type: "session_stopped";
+}
+
+export interface TranscriptMessage {
+  type: "transcript";
+  id: string;
+  speaker: number;
+  source: "speech" | "sign";
+  text: string;
+  lang: string;
+  isFinal: boolean;
+  timestamp?: number;
+}
+
+export interface TranslationMessage {
+  type: "translation";
+  refId: string;
+  speaker: number;
+  text: string;
+  targetLang: string;
+}
+
+export interface ErrorMessage {
+  type: "error";
+  message: string;
+  code: string;
+}
+
+export type ServerMessage =
+  | SessionStartedMessage
+  | SessionStoppedMessage
+  | TranscriptMessage
+  | TranslationMessage
+  | ErrorMessage;
+
+// --- UI state ---
+
+export interface TranscriptEntry {
+  id: string;
+  speaker: number;
+  source: "speech" | "sign";
+  text: string;
+  lang: string;
+  isFinal: boolean;
+  timestamp?: number;
+  translation?: string;
+}
