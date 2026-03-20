@@ -27,7 +27,7 @@ export function SpeakerColumn({
     if (entriesRef.current) {
       entriesRef.current.scrollTop = entriesRef.current.scrollHeight;
     }
-  }, [speakerEntries]);
+  }, [speakerEntries.length]);
 
   return (
     <div className="speaker-column">

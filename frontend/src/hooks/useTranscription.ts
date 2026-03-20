@@ -36,7 +36,12 @@ export function useTranscription() {
 
   const handleServerMessage = useCallback((event: MessageEvent) => {
     if (typeof event.data !== "string") return;
-    const msg: ServerMessage = JSON.parse(event.data);
+    let msg: ServerMessage;
+    try {
+      msg = JSON.parse(event.data);
+    } catch {
+      return;
+    }
 
     switch (msg.type) {
       case "session_started":
