@@ -13,7 +13,7 @@ def test_settings_loads_from_env():
         "AZURE_OPENAI_DEPLOYMENT": "gpt-4o",
     }
     with patch.dict(os.environ, env, clear=False):
-        s = Settings()
+        s = Settings(_env_file=None)
     assert s.azure_speech_key == "test-key"
     assert s.azure_speech_region == "eastus"
     assert s.azure_speech_endpoint == (
@@ -23,6 +23,7 @@ def test_settings_loads_from_env():
 
 def test_settings_defaults_to_empty():
     s = Settings(
+        _env_file=None,
         azure_speech_key="",
         azure_speech_region="",
         azure_openai_key="",
@@ -30,3 +31,7 @@ def test_settings_defaults_to_empty():
         azure_openai_deployment="",
     )
     assert s.azure_speech_key == ""
+    assert s.azure_speech_region == ""
+    assert s.azure_openai_key == ""
+    assert s.azure_openai_endpoint == ""
+    assert s.azure_openai_deployment == ""
