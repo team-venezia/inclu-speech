@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import uuid
 from typing import Any, Callable, Awaitable
 
 import azure.cognitiveservices.speech as speechsdk
