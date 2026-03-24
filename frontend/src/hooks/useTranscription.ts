@@ -196,11 +196,17 @@ export function useTranscription() {
         setElapsed((prev) => prev + 1);
       }, 1000);
     } catch (err) {
-      setError(
-        err instanceof DOMException && err.name === "NotAllowedError"
-          ? "Microphone access denied. Please allow microphone access in your browser settings."
-          : `Failed to start session: ${err}`
-      );
+      if (err instanceof DOMException) {
+        if (err.name === "NotAllowedError") {
+          setError("Microphone access denied. Please allow microphone access in your browser settings.");
+        } else if (err.name === "NotFoundError") {
+          setError("No microphone found. Please connect a microphone and try again.");
+        } else {
+          setError(`Audio error: ${err.message}`);
+        }
+      } else {
+        setError(`Failed to start session: ${err}`);
+      }
     }
   }, [connect, sendControl]);
 

@@ -104,18 +104,22 @@ class SessionHandler:
         await self._send_json(msg)
 
         if is_final and speaker in self._translation_enabled and self._translation_service:
-            target_lang = self._translation_enabled[speaker]
-            translated = await self._translation_service.translate(text, target_lang)
-            if translated:
-                await self._send_json(
-                    {
-                        "type": "translation",
-                        "refId": utt_id,
-                        "speaker": speaker,
-                        "text": translated,
-                        "targetLang": target_lang,
-                    }
-                )
+            # Dynamically infer target: translate to the "other" language
+            target_lang = "en" if lang.startswith("es") else "es"
+            try:
+                translated = await self._translation_service.translate(text, target_lang)
+                if translated:
+                    await self._send_json(
+                        {
+                            "type": "translation",
+                            "refId": utt_id,
+                            "speaker": speaker,
+                            "text": translated,
+                            "targetLang": target_lang,
+                        }
+                    )
+            except Exception:
+                logger.exception("Translation failed for utterance %s", utt_id)
 
     async def _on_error(self, message: str, code: str) -> None:
         await self._send_json({"type": "error", "message": message, "code": code})

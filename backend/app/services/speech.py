@@ -44,6 +44,10 @@ class SpeechService:
             speechsdk.PropertyId.SpeechServiceResponse_DiarizeIntermediateResults,
             "true",
         )
+        speech_config.set_property(
+            speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode,
+            "Continuous",
+        )
 
         auto_detect_config = AutoDetectSourceLanguageConfig(
             languages=["en-US", "es-ES"]
