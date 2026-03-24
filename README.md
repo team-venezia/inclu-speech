@@ -17,6 +17,63 @@ The solution integrates a wide range of Azure services to power its capabilities
 - **Azure Video Indexer** — sign language video processing
 - **Azure Communication Services** — real-time collaboration infrastructure
 
+## How to run
+
+### Prerequisites
+
+- Python 3.11+
+- Node.js 18+
+- Azure AI Speech resource (key + region)
+- Azure OpenAI resource (optional — only needed for translation)
+
+### 1. Clone and enter the repo
+
+```bash
+git clone <repo-url>
+cd inclu-speech
+```
+
+### 2. Backend
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+cp .env.example .env
+# Edit .env and fill in your Azure credentials:
+#   AZURE_SPEECH_KEY=...
+#   AZURE_SPEECH_REGION=...       e.g. eastus
+#   AZURE_OPENAI_KEY=...          (optional)
+#   AZURE_OPENAI_ENDPOINT=...     (optional)
+#   AZURE_OPENAI_DEPLOYMENT=...   (optional)
+
+uvicorn app.main:app --port 8000 --reload
+```
+
+### 3. Frontend
+
+In a separate terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+The Vite dev server proxies WebSocket connections (`/ws/*`) to the backend on port 8000 automatically.
+
+### 4. Run backend tests
+
+```bash
+cd backend
+source .venv/bin/activate
+pytest
+```
+
 ## Responsible AI
 
 IncluSpeech is built with privacy at its core. Video and audio streams are processed ephemerally and never stored without explicit user consent. Azure AI Content Safety ensures safe and inclusive communication channels, while transparency features surface AI decisions clearly to users. The platform is co-designed with Deaf and hard-of-hearing stakeholders to ensure genuine, lasting accessibility impact.
