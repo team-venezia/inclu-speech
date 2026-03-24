@@ -5,11 +5,17 @@ import { SpeakerColumn } from "./SpeakerColumn";
 interface TranscriptionViewProps {
   entries: TranscriptEntry[];
   onToggleTranslation: (speaker: number, targetLang: string, enabled: boolean) => void;
+  aslState: Record<number, string | null>;
+  onToggleAsl: (speaker: number, direction: "sign_to_text" | "text_to_sign", enabled: boolean) => void;
+  videoStream: MediaStream | null;
 }
 
 export function TranscriptionView({
   entries,
   onToggleTranslation,
+  aslState,
+  onToggleAsl,
+  videoStream,
 }: TranscriptionViewProps) {
   const [translationState, setTranslationState] = useState<Record<number, string | null>>({
     1: null,
@@ -17,9 +23,6 @@ export function TranscriptionView({
   });
 
   const handleToggle = (speaker: number, enabled: boolean) => {
-    // Infer target language from what this speaker mostly speaks.
-    // Look at the latest entries for this speaker to find their detected language,
-    // then translate to the "other" language.
     const speakerEntries = entries.filter((e) => e.speaker === speaker && e.isFinal && e.lang);
     const lastLang = speakerEntries.length > 0
       ? speakerEntries[speakerEntries.length - 1].lang
@@ -39,6 +42,9 @@ export function TranscriptionView({
         entries={entries}
         translationEnabled={translationState[1] !== null}
         onToggleTranslation={(enabled) => handleToggle(1, enabled)}
+        aslDirection={aslState[1] ?? null}
+        onToggleAsl={(enabled, direction) => onToggleAsl(1, direction, enabled)}
+        videoStream={aslState[1] === "sign_to_text" ? videoStream : null}
       />
       <div className="column-divider" />
       <SpeakerColumn
@@ -49,6 +55,9 @@ export function TranscriptionView({
         entries={entries}
         translationEnabled={translationState[2] !== null}
         onToggleTranslation={(enabled) => handleToggle(2, enabled)}
+        aslDirection={aslState[2] ?? null}
+        onToggleAsl={(enabled, direction) => onToggleAsl(2, direction, enabled)}
+        videoStream={aslState[2] === "sign_to_text" ? videoStream : null}
       />
     </div>
   );

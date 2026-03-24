@@ -13,6 +13,9 @@ function App() {
     startSession,
     stopSession,
     toggleTranslation,
+    aslState,
+    toggleAsl,
+    videoStream,
   } = useTranscription();
 
   return (
@@ -48,6 +51,9 @@ function App() {
           <TranscriptionView
             entries={entries}
             onToggleTranslation={toggleTranslation}
+            aslState={aslState}
+            onToggleAsl={toggleAsl}
+            videoStream={videoStream}
           />
         ) : (
           <div className="welcome">
