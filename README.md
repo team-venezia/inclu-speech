@@ -9,13 +9,15 @@ IncluSpeech aims to deliver high-accuracy transcription streamed directly to par
 
 ## Azure services
 
-The solution integrates a wide range of Azure services to power its capabilities:
+- **Azure AI Speech** — real-time transcription, speaker diarization, and bilingual language detection (EN/ES)
+- **Azure OpenAI Service (GPT-4o)** — dynamic per-utterance translation between English and Spanish
+- **Azure Custom Vision** — ASL sign language recognition from webcam video frames
 
-- **Azure AI Speech** — real-time, high-accuracy transcription
-- **Azure OpenAI Service** — summarization and language translation
-- **Azure Computer Vision & Custom Vision** — gesture and sign language recognition
-- **Azure Video Indexer** — sign language video processing
-- **Azure Communication Services** — real-time collaboration infrastructure
+### Future roadmap
+
+- **Azure Computer Vision** — supplement Custom Vision with general gesture detection
+- **Azure Video Indexer** — post-session accessibility review of recorded conversations
+- **Azure Communication Services** — remote multi-user sessions beyond local single-device use
 
 ## How to run
 
@@ -24,7 +26,8 @@ The solution integrates a wide range of Azure services to power its capabilities
 - Python 3.11+
 - Node.js 18+
 - Azure AI Speech resource (key + region)
-- Azure OpenAI resource (optional — only needed for translation)
+- Azure OpenAI resource (optional — needed for translation)
+- Azure Custom Vision resource (optional — needed for sign language recognition)
 
 ### 1. Clone and enter the repo
 
@@ -48,6 +51,10 @@ cp .env.example .env
 #   AZURE_OPENAI_KEY=...          (optional)
 #   AZURE_OPENAI_ENDPOINT=...     (optional)
 #   AZURE_OPENAI_DEPLOYMENT=...   (optional)
+#   AZURE_CUSTOM_VISION_ENDPOINT=...        (optional — for sign language)
+#   AZURE_CUSTOM_VISION_PREDICTION_KEY=...   (optional — for sign language)
+#   AZURE_CUSTOM_VISION_PROJECT_ID=...       (optional — for sign language)
+#   AZURE_CUSTOM_VISION_ITERATION_NAME=...   (optional — for sign language)
 
 uvicorn app.main:app --port 8000 --reload
 ```
