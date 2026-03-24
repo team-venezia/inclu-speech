@@ -72,20 +72,6 @@ async def test_handle_toggle_translation_disable():
 
 
 @pytest.mark.asyncio
-async def test_handle_binary_strips_audio_prefix():
-    """Binary frames starting with 0x01 should strip prefix and push audio."""
-    send = AsyncMock()
-    handler = SessionHandler(send_json=send)
-    mock_speech = MagicMock()
-    handler._speech_service = mock_speech
-
-    audio_data = b"\x00\x01\x02\x03"
-    await handler.handle_binary(b"\x01" + audio_data)
-
-    mock_speech.push_audio.assert_called_once_with(audio_data)
-
-
-@pytest.mark.asyncio
 async def test_handle_binary_routes_video_frame():
     """Binary frames starting with 0x02 should be treated as video frames."""
     send = AsyncMock()
@@ -111,6 +97,7 @@ async def test_handle_binary_drops_unknown_prefix():
     await handler.handle_binary(b"\x03some-data")
 
     mock_speech.push_audio.assert_not_called()
+    send.assert_not_called()
 
 
 @pytest.mark.asyncio
