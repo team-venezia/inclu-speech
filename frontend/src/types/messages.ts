@@ -16,10 +16,18 @@ export interface ToggleTranslationMessage {
   enabled: boolean;
 }
 
+export interface ToggleAslMessage {
+  type: "toggle_asl";
+  speaker: number;
+  enabled: boolean;
+  direction: "sign_to_text" | "text_to_sign";
+}
+
 export type ClientMessage =
   | StartSessionMessage
   | StopSessionMessage
-  | ToggleTranslationMessage;
+  | ToggleTranslationMessage
+  | ToggleAslMessage;
 
 // Audio is sent as binary frames (not JSON), so no type here.
 
@@ -42,6 +50,7 @@ export interface TranscriptMessage {
   lang: string;
   isFinal: boolean;
   timestamp?: number;
+  confidence?: number;
 }
 
 export interface TranslationMessage {
@@ -76,4 +85,5 @@ export interface TranscriptEntry {
   isFinal: boolean;
   timestamp?: number;
   translation?: string;
+  confidence?: number;
 }

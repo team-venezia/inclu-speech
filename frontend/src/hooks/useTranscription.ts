@@ -18,6 +18,8 @@ export function useTranscription() {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [aslState, setAslState] = useState<Record<number, string | null>>({ 1: null, 2: null });
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -26,6 +28,9 @@ export function useTranscription() {
   const timerRef = useRef<number | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const intentionalCloseRef = useRef(false);
+  const videoStreamRef = useRef<MediaStream | null>(null);
+  const captureIntervalRef = useRef<number | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const sendControl = useCallback((msg: ClientMessage) => {
     const ws = wsRef.current;
@@ -59,6 +64,7 @@ export function useTranscription() {
             lang: tm.lang,
             isFinal: tm.isFinal,
             timestamp: tm.timestamp,
+            confidence: tm.confidence,
           };
           if (existing >= 0) {
             const updated = [...prev];
@@ -123,6 +129,70 @@ export function useTranscription() {
     wsRef.current = ws;
   }, [handleServerMessage]);
 
+  const stopCameraCapture = useCallback(() => {
+    if (captureIntervalRef.current) {
+      clearInterval(captureIntervalRef.current);
+      captureIntervalRef.current = null;
+    }
+    if (videoStreamRef.current) {
+      videoStreamRef.current.getTracks().forEach((t) => t.stop());
+      videoStreamRef.current = null;
+      setVideoStream(null);
+    }
+    canvasRef.current = null;
+  }, []);
+
+  const startCameraCapture = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      videoStreamRef.current = stream;
+      setVideoStream(stream);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = 320;
+      canvas.height = 240;
+      canvasRef.current = canvas;
+
+      const video = document.createElement("video");
+      video.srcObject = stream;
+      video.play();
+
+      captureIntervalRef.current = window.setInterval(() => {
+        const ws = wsRef.current;
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return;
+            blob.arrayBuffer().then((buf) => {
+              const prefixed = new Uint8Array(1 + buf.byteLength);
+              prefixed[0] = 0x02; // video prefix
+              prefixed.set(new Uint8Array(buf), 1);
+              if (wsRef.current?.readyState === WebSocket.OPEN) {
+                wsRef.current.send(prefixed.buffer);
+              }
+            });
+          },
+          "image/jpeg",
+          0.7
+        );
+      }, 1000); // 1 fps
+    } catch (err) {
+      if (err instanceof DOMException) {
+        if (err.name === "NotAllowedError") {
+          setError("Camera access denied. Please allow camera access.");
+        } else if (err.name === "NotFoundError") {
+          setError("No camera found. Please connect a camera.");
+        } else {
+          setError(`Camera error: ${err.message}`);
+        }
+      }
+    }
+  }, []);
+
   const startSession = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -161,7 +231,11 @@ export function useTranscription() {
       workletNode.port.onmessage = (event: MessageEvent) => {
         const ws = wsRef.current;
         if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(event.data as ArrayBuffer);
+          const pcmData = event.data as ArrayBuffer;
+          const prefixed = new Uint8Array(1 + pcmData.byteLength);
+          prefixed[0] = 0x01; // audio prefix
+          prefixed.set(new Uint8Array(pcmData), 1);
+          ws.send(prefixed.buffer);
         }
       };
 
@@ -211,6 +285,8 @@ export function useTranscription() {
   }, [connect, sendControl]);
 
   const stopSession = useCallback(() => {
+    stopCameraCapture();
+    setAslState({ 1: null, 2: null });
     sendControl({ type: "stop_session" });
     setIsSessionActive(false);
 
@@ -233,13 +309,29 @@ export function useTranscription() {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-  }, [sendControl]);
+  }, [sendControl, stopCameraCapture]);
 
   const toggleTranslation = useCallback(
     (speaker: number, targetLang: string, enabled: boolean) => {
       sendControl({ type: "toggle_translation", speaker, targetLang, enabled });
     },
     [sendControl]
+  );
+
+  const toggleAsl = useCallback(
+    (speaker: number, direction: "sign_to_text" | "text_to_sign", enabled: boolean) => {
+      sendControl({ type: "toggle_asl", speaker, enabled, direction });
+      setAslState((prev) => ({ ...prev, [speaker]: enabled ? direction : null }));
+
+      if (direction === "sign_to_text") {
+        if (enabled) {
+          startCameraCapture();
+        } else {
+          stopCameraCapture();
+        }
+      }
+    },
+    [sendControl, startCameraCapture, stopCameraCapture]
   );
 
   // Cleanup on unmount
@@ -252,8 +344,9 @@ export function useTranscription() {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      stopCameraCapture();
     };
-  }, []);
+  }, [stopCameraCapture]);
 
   return {
     entries,
@@ -265,5 +358,8 @@ export function useTranscription() {
     stopSession,
     toggleTranslation,
     connect,
+    aslState,
+    toggleAsl,
+    videoStream,
   };
 }
