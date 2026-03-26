@@ -55,6 +55,8 @@ cp .env.example .env
 #   AZURE_CUSTOM_VISION_PREDICTION_KEY=...   (optional — for sign language, prediction resource)
 #   AZURE_CUSTOM_VISION_PROJECT_ID=...       (optional — for sign language)
 #   AZURE_CUSTOM_VISION_ITERATION_NAME=...   (optional — for sign language)
+#   AZURE_CONTENT_SAFETY_ENDPOINT=...        (optional — moderates speech transcripts before display)
+#   AZURE_CONTENT_SAFETY_KEY=...             (optional — required if endpoint is set)
 #
 # Note: AZURE_CUSTOM_VISION_TRAINING_ENDPOINT and AZURE_CUSTOM_VISION_TRAINING_KEY
 # are only used by scripts/upload_training_images.py — do NOT add them here,
