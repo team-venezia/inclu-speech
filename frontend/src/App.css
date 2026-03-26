@@ -417,7 +417,7 @@ body,
   overflow: hidden;
   background: #0d1a2a;
   border: 1px solid #1a1a35;
-  min-height: 180px;
+  min-height: 240px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -427,9 +427,10 @@ body,
 
 .camera-preview {
   width: 100%;
-  height: 180px;
-  object-fit: cover;
+  height: 240px;
+  object-fit: contain;
   border-radius: 10px;
+  background: #000;
 }
 
 .camera-placeholder {
