@@ -117,6 +117,7 @@ class SessionHandler:
                 prediction_key=settings.azure_custom_vision_prediction_key,
                 project_id=settings.azure_custom_vision_project_id,
                 iteration_name=settings.azure_custom_vision_iteration_name,
+                confidence_threshold=0.85,
             )
         self._speech_service.start()
 
