@@ -87,7 +87,7 @@ export function SpeakerColumn({
               if (aslDirection) {
                 onToggleAsl(false, aslDirection as "sign_to_text" | "text_to_sign");
               } else {
-                onToggleAsl(true, speaker === 2 ? "sign_to_text" : "text_to_sign");
+                onToggleAsl(true, "sign_to_text");
               }
             }}
           >
@@ -98,6 +98,20 @@ export function SpeakerColumn({
 
       {aslDirection && (
         <div className="asl-media-area">
+          <div className="asl-direction-tabs">
+            <button
+              className={`asl-direction-tab ${aslDirection === "sign_to_text" ? "active" : ""}`}
+              onClick={() => onToggleAsl(true, "sign_to_text")}
+            >
+              📷 Sign → Text
+            </button>
+            <button
+              className={`asl-direction-tab ${aslDirection === "text_to_sign" ? "active" : ""}`}
+              onClick={() => onToggleAsl(true, "text_to_sign")}
+            >
+              🎬 Text → Sign
+            </button>
+          </div>
           {aslDirection === "sign_to_text" ? (
             <CameraCapture stream={videoStream} />
           ) : (

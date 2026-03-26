@@ -385,6 +385,32 @@ body,
 }
 
 /* ASL media area */
+.asl-direction-tabs {
+  display: flex;
+  border-bottom: 1px solid #1a1a35;
+}
+
+.asl-direction-tab {
+  flex: 1;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 0.78rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+.asl-direction-tab.active {
+  background: #1a1a35;
+  color: #bb86fc;
+}
+
+.asl-direction-tab:hover:not(.active) {
+  background: #111;
+  color: #ccc;
+}
+
 .asl-media-area {
   margin-bottom: 12px;
   border-radius: 10px;
@@ -393,8 +419,9 @@ body,
   border: 1px solid #1a1a35;
   min-height: 180px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   flex-shrink: 0;
 }
 
