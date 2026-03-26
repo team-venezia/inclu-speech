@@ -7,3 +7,6 @@ pydantic-settings==2.8.*
 pytest==8.*
 pytest-asyncio==0.25.*
 httpx==0.28.*
+azure-cognitiveservices-vision-customvision==3.1.*
+msrest==0.7.*
+opencv-python-headless
