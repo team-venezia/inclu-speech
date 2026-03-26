@@ -1,6 +1,7 @@
 import { useTranscription } from "./hooks/useTranscription";
 import { TranscriptionView } from "./components/TranscriptionView";
 import { SessionControls } from "./components/SessionControls";
+import { SummaryPanel } from "./components/SummaryPanel";
 import "./App.css";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
     aslState,
     toggleAsl,
     videoStream,
+    summary,
   } = useTranscription();
 
   return (
@@ -56,13 +58,16 @@ function App() {
             videoStream={videoStream}
           />
         ) : (
-          <div className="welcome">
-            <h1>IncluSpeech</h1>
-            <p>Real-time transcription for inclusive conversations</p>
-            <p className="hint">
-              Place the device between both speakers and press Start.
-            </p>
-          </div>
+          <>
+            <div className="welcome">
+              <h1>IncluSpeech</h1>
+              <p>Real-time transcription for inclusive conversations</p>
+              <p className="hint">
+                Place the device between both speakers and press Start.
+              </p>
+            </div>
+            {summary && <SummaryPanel speakers={summary} />}
+          </>
         )}
       </main>
 
