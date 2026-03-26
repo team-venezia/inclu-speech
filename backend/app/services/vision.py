@@ -54,6 +54,9 @@ class VisionService:
         if top["probability"] < self._confidence_threshold:
             return None
 
+        if top["tagName"].lower() == "negative":
+            return None
+
         return top["tagName"], top["probability"]
 
     async def close(self) -> None:
