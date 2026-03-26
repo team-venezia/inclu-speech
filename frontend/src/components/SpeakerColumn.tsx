@@ -138,7 +138,9 @@ export function SpeakerColumn({
               {entry.lang ? ` · ${entry.lang.split("-")[0].toUpperCase()}` : ""}
               {!entry.isFinal && " · speaking..."}
               {entry.source === "sign" && (
-                <span className="asl-badge">via ASL</span>
+                <span className="asl-badge">
+                  via ASL{entry.confidence != null ? ` · ${Math.round(entry.confidence * 100)}%` : ""}
+                </span>
               )}
             </div>
           </div>
