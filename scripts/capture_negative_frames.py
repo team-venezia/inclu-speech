@@ -10,10 +10,6 @@ Usage:
     pip install opencv-python-headless  # if not already installed
     python ../scripts/capture_negative_frames.py
 
-Controls during capture:
-    SPACE  — start/pause capture
-    Q      — stop and upload
-
 Azure credentials (read from backend/.env):
     AZURE_CUSTOM_VISION_TRAINING_ENDPOINT
     AZURE_CUSTOM_VISION_TRAINING_KEY
@@ -94,63 +90,53 @@ def upload_frames(frames: list[bytes], trainer, project_id: str, tag_id: str) ->
         print(f"  Uploaded {uploaded}/{total}...")
 
 
+COUNTDOWN = 5  # seconds before capture starts
+
+
 def main():
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("❌  Cannot open webcam.")
         sys.exit(1)
 
+    # Warm up the camera (first few frames are often dark/blurry)
+    for _ in range(10):
+        cap.read()
+
     print("\n=== Negative Frame Capture ===")
-    print(f"Target: {TARGET_FRAMES} frames")
-    print("Instructions:")
+    print(f"Target: {TARGET_FRAMES} frames at {CAPTURE_INTERVAL}s intervals "
+          f"(~{int(TARGET_FRAMES * CAPTURE_INTERVAL)}s total)")
+    print("\nInstructions:")
     print("  - Sit naturally in front of the camera, NO signing")
-    print("  - Move around, change hand positions, look different directions")
-    print("  - Press SPACE to start capturing")
-    print("  - Press Q when done (or when target is reached)\n")
+    print("  - Move around slightly, change hand positions, look different directions")
+    print("  - Stay still enough that the webcam can see you\n")
+
+    print(f"Starting in {COUNTDOWN} seconds — get ready...")
+    for i in range(COUNTDOWN, 0, -1):
+        print(f"  {i}...")
+        time.sleep(1)
+    print("  GO — capturing now\n")
 
     frames: list[bytes] = []
-    capturing = False
-    last_capture = 0.0
+    last_capture = time.time() - CAPTURE_INTERVAL  # capture immediately on first iteration
 
-    while True:
+    while len(frames) < TARGET_FRAMES:
         ret, frame = cap.read()
         if not ret:
+            print("❌  Lost camera feed.")
             break
-
-        display = frame.copy()
-        count = len(frames)
-
-        # Status overlay
-        status = "CAPTURING" if capturing else "PAUSED — press SPACE to start"
-        color = (0, 200, 0) if capturing else (0, 140, 255)
-        cv2.putText(display, status, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-        cv2.putText(display, f"Frames: {count}/{TARGET_FRAMES}", (10, 65),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        cv2.putText(display, "Q = stop & upload", (10, display.shape[0] - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (180, 180, 180), 1)
-
-        cv2.imshow("Negative Frame Capture — IncluSpeech", display)
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord("q") or key == ord("Q"):
-            break
-        elif key == ord(" "):
-            capturing = not capturing
-            print("Capturing..." if capturing else "Paused.")
 
         now = time.time()
-        if capturing and (now - last_capture) >= CAPTURE_INTERVAL:
+        if (now - last_capture) >= CAPTURE_INTERVAL:
             _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
             frames.append(buf.tobytes())
             last_capture = now
-            if count % 10 == 0 and count > 0:
-                print(f"  {count} frames captured...")
-            if len(frames) >= TARGET_FRAMES:
-                print(f"\n✅  Reached {TARGET_FRAMES} frames — stopping capture.")
-                break
+            count = len(frames)
+            bar = "█" * (count * 20 // TARGET_FRAMES) + "░" * (20 - count * 20 // TARGET_FRAMES)
+            print(f"\r  [{bar}] {count}/{TARGET_FRAMES}", end="", flush=True)
 
     cap.release()
-    cv2.destroyAllWindows()
+    print(f"\n\n✅  Captured {len(frames)} frames.")
 
     if not frames:
         print("No frames captured — exiting.")
