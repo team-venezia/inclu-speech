@@ -31,7 +31,7 @@ class VisionService:
         url = (
             f"{self._endpoint}/customvision/v3.0/Prediction"
             f"/{self._project_id}/classify/iterations"
-            f"/{self._iteration_name}/image"
+            f"/{self._iteration_name}/image/nostore"
         )
         headers = {
             "Prediction-Key": self._prediction_key,
