@@ -355,6 +355,8 @@ export function useTranscription() {
     };
   }, [stopCameraCapture]);
 
+  const clearSummary = useCallback(() => setSummary(null), []);
+
   return {
     entries,
     status,
@@ -369,5 +371,6 @@ export function useTranscription() {
     toggleAsl,
     videoStream,
     summary,
+    clearSummary,
   };
 }

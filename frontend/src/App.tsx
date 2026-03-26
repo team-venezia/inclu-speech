@@ -18,6 +18,7 @@ function App() {
     toggleAsl,
     videoStream,
     summary,
+    clearSummary,
   } = useTranscription();
 
   return (
@@ -66,7 +67,7 @@ function App() {
                 Place the device between both speakers and press Start.
               </p>
             </div>
-            {summary && <SummaryPanel speakers={summary} />}
+            {summary && <SummaryPanel speakers={summary} onClose={clearSummary} />}
           </>
         )}
       </main>
