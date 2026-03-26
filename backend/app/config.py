@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     azure_custom_vision_prediction_key: str = ""
     azure_custom_vision_project_id: str = ""
     azure_custom_vision_iteration_name: str = ""
+    azure_content_safety_endpoint: str = ""
+    azure_content_safety_key: str = ""
 
     @property
     def azure_speech_endpoint(self) -> str:

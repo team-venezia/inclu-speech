@@ -6,6 +6,7 @@ import logging
 from typing import Any, Callable, Awaitable
 
 from app.config import settings
+from app.services.content_safety import ContentSafetyService
 from app.services.speech import SpeechService
 from app.services.summarization import SummarizationService
 from app.services.translation import TranslationService
@@ -33,6 +34,7 @@ class SessionHandler:
         self._loop = asyncio.get_running_loop()
         self._transcript_log: list[dict] = []
         self._summarization_service: SummarizationService | None = None
+        self._content_safety_service: ContentSafetyService | None = None
 
     async def handle_text(self, raw: str) -> None:
         try:
@@ -103,6 +105,11 @@ class SessionHandler:
                 api_key=settings.azure_openai_key,
                 endpoint=settings.azure_openai_endpoint,
                 deployment=settings.azure_openai_deployment,
+            )
+        if settings.azure_content_safety_endpoint:
+            self._content_safety_service = ContentSafetyService(
+                endpoint=settings.azure_content_safety_endpoint,
+                key=settings.azure_content_safety_key,
             )
         if settings.azure_custom_vision_endpoint:
             self._vision_service = VisionService(
@@ -220,6 +227,10 @@ class SessionHandler:
         }
         if timestamp is not None:
             msg["timestamp"] = round(timestamp, 2)
+
+        if is_final and self._content_safety_service:
+            if not await self._content_safety_service.is_safe(text):
+                return
         await self._send_json(msg)
 
         if is_final:
