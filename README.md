@@ -51,10 +51,14 @@ cp .env.example .env
 #   AZURE_OPENAI_KEY=...          (optional)
 #   AZURE_OPENAI_ENDPOINT=...     (optional)
 #   AZURE_OPENAI_DEPLOYMENT=...   (optional)
-#   AZURE_CUSTOM_VISION_ENDPOINT=...        (optional — for sign language)
-#   AZURE_CUSTOM_VISION_PREDICTION_KEY=...   (optional — for sign language)
+#   AZURE_CUSTOM_VISION_ENDPOINT=...        (optional — for sign language, prediction resource)
+#   AZURE_CUSTOM_VISION_PREDICTION_KEY=...   (optional — for sign language, prediction resource)
 #   AZURE_CUSTOM_VISION_PROJECT_ID=...       (optional — for sign language)
 #   AZURE_CUSTOM_VISION_ITERATION_NAME=...   (optional — for sign language)
+#
+# Note: AZURE_CUSTOM_VISION_TRAINING_ENDPOINT and AZURE_CUSTOM_VISION_TRAINING_KEY
+# are only used by scripts/upload_training_images.py — do NOT add them here,
+# as pydantic-settings will reject unknown variables and crash the app.
 
 uvicorn app.main:app --port 8000 --reload
 ```
