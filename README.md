@@ -81,6 +81,19 @@ source .venv/bin/activate
 pytest
 ```
 
+## Training datasets
+
+The Azure Custom Vision model was trained using the following publicly available datasets from [Roboflow Universe](https://universe.roboflow.com):
+
+| Dataset | License |
+|---------|---------|
+| [ASL (American Sign Language)](https://universe.roboflow.com/shivakumar/asl-american-sign-language) | CC BY 4.0 |
+| [Sign Language Detection](https://universe.roboflow.com/igdtuw-0y0hh/sign-language-detection-xlzhm) | CC BY 4.0 |
+| [Sign Language Sign](https://universe.roboflow.com/sign-language-7irky/sign-language-sign) | CC BY 4.0 |
+| [Sign language (Christ University)](https://universe.roboflow.com/chrsit-university/sign-language-q0pbc) | Public Domain |
+| [Sign language (SIC)](https://universe.roboflow.com/sic-yo6ct/sign-language-c8yo2) | CC BY 4.0 |
+| [Sign Language (Mehedi)](https://universe.roboflow.com/sign-language-mehedi/sign-language-kqyow) | CC BY 4.0 |
+
 ## Responsible AI
 
 IncluSpeech is built with privacy at its core. Video and audio streams are processed ephemerally and never stored without explicit user consent. Azure AI Content Safety ensures safe and inclusive communication channels, while transparency features surface AI decisions clearly to users. The platform is co-designed with Deaf and hard-of-hearing stakeholders to ensure genuine, lasting accessibility impact.
