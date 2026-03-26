@@ -7,6 +7,7 @@ from typing import Any, Callable, Awaitable
 
 from app.config import settings
 from app.services.speech import SpeechService
+from app.services.summarization import SummarizationService
 from app.services.translation import TranslationService
 from app.services.vision import VisionService
 
@@ -30,6 +31,8 @@ class SessionHandler:
         self._prediction_in_flight: bool = False
         self._last_sign: dict[int, tuple[str, float]] = {}  # speaker -> (tag, timestamp)
         self._loop = asyncio.get_running_loop()
+        self._transcript_log: list[dict] = []
+        self._summarization_service: SummarizationService | None = None
 
     async def handle_text(self, raw: str) -> None:
         try:
@@ -44,7 +47,17 @@ class SessionHandler:
             await self._send_json({"type": "session_started"})
         elif msg_type == "stop_session":
             self._stop_speech_service()
+            if self._transcript_log and self._summarization_service:
+                try:
+                    result = await self._summarization_service.summarize(self._transcript_log)
+                    await self._send_json({
+                        "type": "summary",
+                        "speakers": {str(spk): data for spk, data in result.items()},
+                    })
+                except Exception:
+                    logger.exception("Summarization failed")
             await self._send_json({"type": "session_stopped"})
+            self._transcript_log = []
         elif msg_type == "toggle_translation":
             self._handle_toggle(msg)
         elif msg_type == "toggle_asl":
@@ -72,6 +85,7 @@ class SessionHandler:
         self._asl_enabled = {}
         self._sign_counter = 0
         self._last_sign = {}
+        self._transcript_log = []
         self._speech_service = SpeechService(
             speech_key=settings.azure_speech_key,
             speech_region=settings.azure_speech_region,
@@ -81,6 +95,11 @@ class SessionHandler:
         )
         if settings.azure_openai_key:
             self._translation_service = TranslationService(
+                api_key=settings.azure_openai_key,
+                endpoint=settings.azure_openai_endpoint,
+                deployment=settings.azure_openai_deployment,
+            )
+            self._summarization_service = SummarizationService(
                 api_key=settings.azure_openai_key,
                 endpoint=settings.azure_openai_endpoint,
                 deployment=settings.azure_openai_deployment,
@@ -149,6 +168,7 @@ class SessionHandler:
             if last and last[0] == tag and (now - last[1]) < 2.0:
                 return
             self._last_sign[speaker] = (tag, now)
+            self._transcript_log.append({"speaker": speaker, "text": tag, "source": "sign"})
             self._sign_counter += 1
             sign_id = f"sign-{self._sign_counter:04d}"
             await self._send_json({
@@ -201,6 +221,9 @@ class SessionHandler:
         if timestamp is not None:
             msg["timestamp"] = round(timestamp, 2)
         await self._send_json(msg)
+
+        if is_final:
+            self._transcript_log.append({"speaker": speaker, "text": text, "source": "speech"})
 
         if is_final and speaker in self._translation_enabled and self._translation_service:
             # Dynamically infer target: translate to the "other" language

@@ -167,3 +167,156 @@ async def test_process_video_frame_deduplicates():
     await handler._process_video_frame(b"\xff\xd8fake2")
     assert send.call_count == 1
     assert send.call_args[0][0]["text"] == "goodbye"
+
+
+# --- Summarization tests ---
+
+@pytest.mark.asyncio
+async def test_stop_session_with_entries_emits_summary_then_stopped():
+    """stop_session with non-empty log should emit summary (str keys) then session_stopped."""
+    send = AsyncMock()
+    handler = SessionHandler(send_json=send)
+    handler._transcript_log = [{"speaker": 1, "text": "hello", "source": "speech"}]
+    mock_service = MagicMock()
+    mock_service.stop = MagicMock()
+    handler._speech_service = mock_service
+
+    mock_summarizer = MagicMock()
+    mock_summarizer.summarize = AsyncMock(
+        return_value={1: {"en": ["Said hello"], "es": ["Dijo hola"]}}
+    )
+    handler._summarization_service = mock_summarizer
+
+    await handler.handle_text('{"type": "stop_session"}')
+
+    calls = [c[0][0] for c in send.call_args_list]
+    summary_msgs = [m for m in calls if m["type"] == "summary"]
+    stopped_msgs = [m for m in calls if m["type"] == "session_stopped"]
+    assert len(summary_msgs) == 1
+    assert len(stopped_msgs) == 1
+    summary_idx = calls.index(summary_msgs[0])
+    stopped_idx = calls.index(stopped_msgs[0])
+    assert summary_idx < stopped_idx
+    # speaker keys must be strings
+    assert "1" in summary_msgs[0]["speakers"]
+    assert summary_msgs[0]["speakers"]["1"]["en"] == ["Said hello"]
+
+
+@pytest.mark.asyncio
+async def test_stop_session_empty_log_emits_only_stopped():
+    """stop_session with empty transcript log should NOT call summarizer."""
+    send = AsyncMock()
+    handler = SessionHandler(send_json=send)
+    handler._transcript_log = []
+    mock_service = MagicMock()
+    mock_service.stop = MagicMock()
+    handler._speech_service = mock_service
+
+    mock_summarizer = MagicMock()
+    mock_summarizer.summarize = AsyncMock()
+    handler._summarization_service = mock_summarizer
+
+    await handler.handle_text('{"type": "stop_session"}')
+
+    mock_summarizer.summarize.assert_not_called()
+    calls = [c[0][0] for c in send.call_args_list]
+    assert not any(m["type"] == "summary" for m in calls)
+    assert any(m["type"] == "session_stopped" for m in calls)
+
+
+@pytest.mark.asyncio
+async def test_stop_session_summarization_failure_still_emits_stopped():
+    """If summarizer raises, session_stopped is still emitted."""
+    send = AsyncMock()
+    handler = SessionHandler(send_json=send)
+    handler._transcript_log = [{"speaker": 1, "text": "hi", "source": "speech"}]
+    mock_service = MagicMock()
+    mock_service.stop = MagicMock()
+    handler._speech_service = mock_service
+
+    mock_summarizer = MagicMock()
+    mock_summarizer.summarize = AsyncMock(side_effect=Exception("API error"))
+    handler._summarization_service = mock_summarizer
+
+    await handler.handle_text('{"type": "stop_session"}')
+
+    calls = [c[0][0] for c in send.call_args_list]
+    assert any(m["type"] == "session_stopped" for m in calls)
+
+
+@pytest.mark.asyncio
+async def test_start_speech_service_resets_transcript_log():
+    """_start_speech_service should reset _transcript_log to []."""
+    send = AsyncMock()
+    handler = SessionHandler(send_json=send)
+    handler._transcript_log = [{"speaker": 1, "text": "old", "source": "speech"}]
+
+    with patch("app.ws.handlers.SpeechService") as mock_speech_cls, \
+         patch("app.ws.handlers.settings") as mock_settings:
+        mock_settings.azure_speech_key = "key"
+        mock_settings.azure_speech_region = "eastus"
+        mock_settings.azure_openai_key = None
+        mock_settings.azure_custom_vision_endpoint = None
+        mock_speech_instance = MagicMock()
+        mock_speech_cls.return_value = mock_speech_instance
+        handler._start_speech_service()
+
+    assert handler._transcript_log == []
+
+
+@pytest.mark.asyncio
+async def test_on_transcript_final_appended_to_log():
+    """Final transcript entries should be appended to _transcript_log."""
+    send = AsyncMock()
+    handler = SessionHandler(send_json=send)
+
+    await handler._on_transcript("utt-001", 1, "Hello world", "en", True, 1.0)
+
+    assert len(handler._transcript_log) == 1
+    assert handler._transcript_log[0] == {"speaker": 1, "text": "Hello world", "source": "speech"}
+
+
+@pytest.mark.asyncio
+async def test_on_transcript_partial_not_appended():
+    """Partial transcript entries should NOT be added to the log."""
+    send = AsyncMock()
+    handler = SessionHandler(send_json=send)
+
+    await handler._on_transcript("utt-001", 1, "Hel", "en", False, None)
+
+    assert handler._transcript_log == []
+
+
+@pytest.mark.asyncio
+async def test_process_video_frame_appends_sign_to_log():
+    """Recognized sign frames should be appended to _transcript_log."""
+    send = AsyncMock()
+    handler = SessionHandler(send_json=send)
+    handler._asl_enabled = {1: "sign_to_text"}
+
+    mock_vision = AsyncMock()
+    mock_vision.predict = AsyncMock(return_value=("hello", 0.95))
+    handler._vision_service = mock_vision
+
+    await handler._process_video_frame(b"\xff\xd8fake")
+
+    assert len(handler._transcript_log) == 1
+    assert handler._transcript_log[0] == {"speaker": 1, "text": "hello", "source": "sign"}
+
+
+@pytest.mark.asyncio
+async def test_process_video_frame_deduplicated_not_appended():
+    """Deduplicated signs (within 2s cooldown) should NOT be added to the log."""
+    send = AsyncMock()
+    handler = SessionHandler(send_json=send)
+    handler._asl_enabled = {1: "sign_to_text"}
+
+    mock_vision = AsyncMock()
+    mock_vision.predict = AsyncMock(return_value=("hello", 0.95))
+    handler._vision_service = mock_vision
+
+    await handler._process_video_frame(b"\xff\xd8fake")  # first — appended
+    log_len_after_first = len(handler._transcript_log)
+
+    await handler._process_video_frame(b"\xff\xd8fake")  # duplicate — NOT appended
+    assert len(handler._transcript_log) == log_len_after_first
