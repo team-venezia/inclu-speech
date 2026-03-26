@@ -150,9 +150,10 @@ class SessionHandler:
                 return
             self._last_sign[speaker] = (tag, now)
             self._sign_counter += 1
+            sign_id = f"sign-{self._sign_counter:04d}"
             await self._send_json({
                 "type": "transcript",
-                "id": f"sign-{self._sign_counter:04d}",
+                "id": sign_id,
                 "speaker": speaker,
                 "source": "sign",
                 "text": tag,
@@ -160,6 +161,20 @@ class SessionHandler:
                 "isFinal": True,
                 "confidence": round(confidence, 2),
             })
+
+            if speaker in self._translation_enabled and self._translation_service:
+                try:
+                    translated = await self._translation_service.translate(tag, "es")
+                    if translated:
+                        await self._send_json({
+                            "type": "translation",
+                            "refId": sign_id,
+                            "speaker": speaker,
+                            "text": translated,
+                            "targetLang": "es",
+                        })
+                except Exception:
+                    logger.exception("Translation failed for sign %s", sign_id)
         except Exception:
             logger.exception("Video frame processing failed")
         finally:
