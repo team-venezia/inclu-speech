@@ -67,11 +67,17 @@ export interface ErrorMessage {
   code: string;
 }
 
+export interface SummaryMessage {
+  type: "summary";
+  speakers: Record<string, { en: string[]; es: string[] }>;
+}
+
 export type ServerMessage =
   | SessionStartedMessage
   | SessionStoppedMessage
   | TranscriptMessage
   | TranslationMessage
+  | SummaryMessage
   | ErrorMessage;
 
 // --- UI state ---

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   ClientMessage,
   ServerMessage,
+  SummaryMessage,
   TranscriptEntry,
   TranscriptMessage,
   TranslationMessage,
@@ -20,6 +21,7 @@ export function useTranscription() {
   const [elapsed, setElapsed] = useState(0);
   const [aslState, setAslState] = useState<Record<number, string | null>>({ 1: null, 2: null });
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  const [summary, setSummary] = useState<SummaryMessage["speakers"] | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -82,6 +84,10 @@ export function useTranscription() {
             e.id === tl.refId ? { ...e, translation: tl.text } : e
           );
         });
+        break;
+
+      case "summary":
+        setSummary((msg as SummaryMessage).speakers);
         break;
 
       case "error":
@@ -194,6 +200,7 @@ export function useTranscription() {
   }, []);
 
   const startSession = useCallback(async () => {
+    setSummary(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -361,5 +368,6 @@ export function useTranscription() {
     aslState,
     toggleAsl,
     videoStream,
+    summary,
   };
 }
