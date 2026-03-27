@@ -1,4 +1,9 @@
 # IncluSpeech - Microsoft Innovation March Challenge 2026
+
+## Links
+- Presentation: https://www.canva.com/design/DAHFKWl-WG0/TTWQKAhCD_Xtp4X5S5z_nA/view?utm_content=DAHFKWl-WG0&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=he1e5352109
+- Running App Videos: https://drive.google.com/drive/folders/1WHnyRXu12gJ1t99-fEuY_IcOxogQm4gw?usp=sharing
+
 ### Multimodal AI communication hub for inclusive, real-time collaboration
 
 IncluSpeech bridges the communication gap between Deaf, hard-of-hearing, and hearing individuals by combining real-time speech-to-text transcription, bidirectional sign language translation, and automated accessible meeting summaries — all powered by Azure AI and delivered through a seamless, privacy-conscious experience.
