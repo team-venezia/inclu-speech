@@ -20,8 +20,6 @@ export const SIGN_VOCABULARY: SignEntry[] = [
   { word: "good", label: "GOOD", videoFile: "good.mp4" },
   { word: "bad", label: "BAD", videoFile: "bad.mp4" },
   { word: "understand", label: "UNDERSTAND", videoFile: "understand.mp4" },
-  { word: "don't understand", label: "DON'T-UNDERSTAND", videoFile: "dont-understand.mp4" },
-  { word: "again", label: "AGAIN", videoFile: "again.mp4" },
   { word: "goodbye", label: "GOODBYE", videoFile: "goodbye.mp4" },
 ];
 
